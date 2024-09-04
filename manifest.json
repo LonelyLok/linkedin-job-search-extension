@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "linkedin-job-search-extension",
+  "version": "0.0.0",
+  "action": { "default_popup": "index.html" },
+  "permissions": ["tabs","storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/*"],
+      "js": ["src/override.ts"]
+    }
+  ]
+}
