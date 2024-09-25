@@ -20,6 +20,16 @@ function injectCSS() {
 }
 
 // Function to apply 'inert' attribute
+function buttonListener(type: string) {
+  const buttons = document.querySelectorAll('.job-card-container__action');
+  buttons.forEach((button) => {
+    button.removeEventListener('click', selectNextNonHiddenJob);
+    if (type === 'add') {
+      button.addEventListener('click', selectNextNonHiddenJob);
+    }
+  });
+}
+
 function applyInert() {
   const dismissedCards = document.querySelectorAll(
     '.job-card-container.job-card-list--is-dismissed'
@@ -28,11 +38,36 @@ function applyInert() {
     card.setAttribute('inert', '');
     card.setAttribute('aria-hidden', 'true');
   });
+  buttonListener('add');
 }
 
 function fullInject() {
   injectCSS();
   applyInert();
+}
+
+function selectNextNonHiddenJob() {
+  const jobCards = Array.from(document.querySelectorAll('.job-card-container'));
+  const currentSelectedJob: any = document.querySelector(
+    '.jobs-search-results-list__list-item--active'
+  );
+  const currentJobId = currentSelectedJob?.dataset?.jobId;
+  const allJobIds = jobCards.map((job: any) => job?.dataset?.jobId);
+
+  if (currentSelectedJob?.classList.contains('job-card-list--is-dismissed') || !currentSelectedJob) {
+    const startIndex = currentJobId
+      ? allJobIds.indexOf(currentJobId)
+      : -1;
+
+    for (let i = startIndex + 1; i < jobCards.length; i++) {
+      const job = jobCards[i] as HTMLElement;
+      if (!job.classList.contains('job-card-list--is-dismissed')) {
+        job.click();
+        job.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+  }
 }
 
 function removeCSS() {
@@ -49,6 +84,7 @@ function removeInert() {
     card.removeAttribute('inert');
     card.removeAttribute('aria-hidden');
   });
+  buttonListener('remove');
 }
 
 function fullRemove() {
@@ -78,9 +114,17 @@ function main() {
     }
 
     // Set up observer for future changes
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver((mutations:any) => {
       if (isJobSearchPage() && isFeatureEnabled) {
-        applyInert();
+        const relevantMutations = mutations.filter((mutation:any) => {
+          const target = mutation.target as HTMLElement;
+          return target.classList?.contains('jobs-search-results-list') ||
+                 target.closest('.jobs-search-results-list') !== null;
+        });
+        if(relevantMutations.length){
+          applyInert();
+          selectNextNonHiddenJob();
+        }
       }
     });
 
