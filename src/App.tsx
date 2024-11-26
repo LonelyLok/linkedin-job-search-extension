@@ -23,7 +23,7 @@ function App() {
   const [unit, setUnit] = useState('days');
 
   useEffect(() => {
-    chrome?.storage?.sync.get(['hideJobs'], (result) => {
+    chrome?.storage?.local.get(['hideJobs'], (result) => {
       if(result.hideJobs !== undefined) {
         setIsHideJobs(result.hideJobs);
       }
@@ -78,7 +78,7 @@ function App() {
   const handleHideJobs = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = !!event.target.checked
     setIsHideJobs(checked);
-    chrome?.storage?.sync.set({ hideJobs: checked });
+    chrome?.storage?.local.set({ hideJobs: checked });
     chrome?.tabs?.query({active: true, currentWindow: true}, (tabs) => {
       chrome.tabs.sendMessage(tabs[0]?.id as number, { action: "toggleHideJobs", hideJobs: checked });
     });

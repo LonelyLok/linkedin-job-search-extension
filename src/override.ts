@@ -20,15 +20,15 @@ function injectCSS() {
 }
 
 // Function to apply 'inert' attribute
-function buttonListener(type: string) {
-  const buttons = document.querySelectorAll('.job-card-container__action');
-  buttons.forEach((button) => {
-    button.removeEventListener('click', selectNextNonHiddenJob);
-    if (type === 'add') {
-      button.addEventListener('click', selectNextNonHiddenJob);
-    }
-  });
-}
+// function buttonListener(type: string) {
+//   const buttons = document.querySelectorAll('.job-card-container__action');
+//   buttons.forEach((button) => {
+//     button.removeEventListener('click', selectNextNonHiddenJob);
+//     if (type === 'add') {
+//       button.addEventListener('click', selectNextNonHiddenJob);
+//     }
+//   });
+// }
 
 function applyInert() {
   const dismissedCards = document.querySelectorAll(
@@ -38,7 +38,7 @@ function applyInert() {
     card.setAttribute('inert', '');
     card.setAttribute('aria-hidden', 'true');
   });
-  buttonListener('add');
+  // buttonListener('add');
 }
 
 function fullInject() {
@@ -47,14 +47,16 @@ function fullInject() {
 }
 
 function selectNextNonHiddenJob() {
-  const jobCards = Array.from(document.querySelectorAll('.job-card-container'));
-  const currentSelectedJob: any = document.querySelector(
+  const jobCards = document.querySelectorAll('.job-card-container')
+  const currentSelectedJob = document.querySelector(
     '.jobs-search-results-list__list-item--active'
   );
-  const currentJobId = currentSelectedJob?.dataset?.jobId;
-  const allJobIds = jobCards.map((job: any) => job?.dataset?.jobId);
+  const currentJobId = (currentSelectedJob as any)?.dataset?.jobId;
+  const allJobIds = Array.from(jobCards).map((job: any) => job?.dataset?.jobId);
 
-  if (currentSelectedJob?.classList.contains('job-card-list--is-dismissed') || !currentSelectedJob) {
+  const isCurrentJobDismissed = !!currentSelectedJob?.classList.contains('job-card-list--is-dismissed');
+
+  if (isCurrentJobDismissed) {
     const startIndex = currentJobId
       ? allJobIds.indexOf(currentJobId)
       : -1;
@@ -84,7 +86,7 @@ function removeInert() {
     card.removeAttribute('inert');
     card.removeAttribute('aria-hidden');
   });
-  buttonListener('remove');
+  // buttonListener('remove');
 }
 
 function fullRemove() {
@@ -118,11 +120,13 @@ function main() {
       if (isJobSearchPage() && isFeatureEnabled) {
         const relevantMutations = mutations.filter((mutation:any) => {
           const target = mutation.target as HTMLElement;
-          return target.classList?.contains('jobs-search-results-list') ||
-                 target.closest('.jobs-search-results-list') !== null;
+          return target.classList?.contains('job-card-container__action');
         });
-        if(relevantMutations.length){
-          applyInert();
+        const buttonIds = relevantMutations.map((mutation:any)=>mutation.target).filter((i:any)=>!!i).map((i:any)=>i.id)
+
+        const isUnique = !!(new Set(buttonIds).size === 1)
+
+        if(isUnique){
           selectNextNonHiddenJob();
         }
       }
@@ -148,7 +152,7 @@ chrome?.runtime?.onMessage.addListener((request, _sender, _sendResponse) => {
   }
 });
 
-chrome?.storage?.sync.get(['hideJobs'], (result) => {
+chrome?.storage?.local.get(['hideJobs'], (result) => {
   if (result.hideJobs !== undefined) {
     updateFeatureState(result.hideJobs);
   }
